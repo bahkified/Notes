@@ -1,0 +1,4 @@
+# These files/directories will be ignored by GIT
+
+*.iml
+.idea/
