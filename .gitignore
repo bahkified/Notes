@@ -3,9 +3,13 @@
 # IntelliJ files
 *.iml
 .idea/
+*.ipr
+*.iws
 
 # Eclipse files
 .classpath
 .project
 *.launch
 .settings/
+
+target/
