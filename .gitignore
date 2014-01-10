@@ -1,4 +1,11 @@
 # These files/directories will be ignored by GIT
 
+# IntelliJ files
 *.iml
 .idea/
+
+# Eclipse files
+.classpath
+.project
+*.launch
+.settings/
