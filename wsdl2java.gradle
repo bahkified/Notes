@@ -1,0 +1,105 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+def cxftoolsVersion = '2.7.8'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+sourceSets{
+    genSrc {
+        java {
+            srcDir "generated-sources/cxf"
+        }
+    }
+}
+
+project.ext {
+    wsdlDir = file("src/main/resources/wsdl")
+    generatedWsdlDir = file("generated-sources/cxf")
+    wsdlsToGenerate =
+            ["-d", generatedWsdlDir, "-fe", 'jaxws21', "$wsdlDir/StudentInfoService.wsdl"]
+
+    cxfVersion = cxftoolsVersion
+    cxfArtifacts = [
+            'cxf-rt-frontend-jaxws',
+            'cxf-rt-frontend-jaxrs',
+            'cxf-rt-transports-http',
+            'cxf-rt-rs-client',
+            'cxf-rt-rs-service-description',
+    ]
+
+}
+
+configurations{
+    ws
+}
+
+ext {
+// Artifacts for CXF dependency.
+    cxfToolArtifacts = [
+            'cxf-tools-wsdlto-frontend-jaxws',
+            'cxf-tools-wsdlto-databinding-jaxb',
+            'cxf-tools-common',
+            'cxf-tools-wsdlto-core'
+    ]
+}
+
+dependencies {
+    cxfToolArtifacts.each { artifact ->
+        ws "org.apache.cxf:$artifact:$cxfVersion"
+    }
+}
+
+dependencies{
+//    ws "org.apache.cxf:cxf-tools:$cxftoolsVersion",
+//            "org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb:$cxftoolsVersion",
+//            "org.apache.cxf:cxf-tools-wsdlto-frontend-jaxws:$cxftoolsVersion",
+//            "log4j:log4j:1.2.17"
+
+//    compile "org.apache.cxf:cxf-tools:$cxftoolsVersion",
+//            "org.apache.cxf:cxf-tools-wsdlto-databinding-jaxb:$cxftoolsVersion",
+//            "org.apache.cxf:cxf-tools-wsdlto-frontend-jaxws:$cxftoolsVersion"
+    cxfArtifacts.each { artifact ->
+        compile "org.apache.cxf:$artifact:$cxfVersion"
+    }
+
+    compile "commons-lang:commons-lang:2.6"
+    compile "junit:junit:4.11"
+}
+
+task cleanGenSrc(dependsOn: clean) {
+    delete( generatedWsdlDir )
+}
+
+task wsdl2Java(dependsOn: cleanGenSrc) {
+    if (!wsdlDir.listFiles()) {
+        // do nothing
+    } else {
+        inputs.files wsdlDir.listFiles()
+        outputs.files generatedWsdlDir
+        doLast {
+            javaexec {
+                classpath configurations.ws
+                main = 'org.apache.cxf.tools.wsdlto.WSDLToJava'
+                args = wsdlsToGenerate
+                args.add(0, '-xjc-mark-generated')
+                args.add(0, '-client')
+                systemProperties = ['exitOnFinish':'TRUE']
+            }
+        }
+    }
+}
+//compileGenSrcJava.dependsOn(wsdl2Java)
+
+task wrapper(type: Wrapper) {
+    gradleVersion = 1.9
+}
